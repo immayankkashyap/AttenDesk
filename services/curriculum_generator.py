@@ -3,7 +3,7 @@ from models.student import StudentProfile
 from models.curriculum import DailyCurriculum, BreakPeriod, MicroTask
 from services.timetable_analyzer import TimetableAnalyzer
 from services.academic_analyzer import AcademicAnalyzer
-from services.llama_service import LlamaService
+from services.gemini_service import GeminiService
 from datetime import datetime
 import uuid
 
@@ -11,7 +11,7 @@ class CurriculumGenerator:
     def __init__(self):
         self.timetable_analyzer = TimetableAnalyzer()
         self.academic_analyzer = AcademicAnalyzer()
-        self.llama_service = LlamaService()  # Changed from gemini_service
+        self.gemini_service = GeminiService()
         
     def generate_daily_curriculum(self, student: StudentProfile, 
                                 timetable_dict: Dict, date: str = None) -> DailyCurriculum:
@@ -55,7 +55,7 @@ class CurriculumGenerator:
         context = self._build_generation_context(break_period, student, academic_analysis)
         
         # Use Gemini to generate intelligent tasks
-        tasks = self.llama_service.generate_micro_tasks(context)
+        tasks = self.gemini_service.generate_micro_tasks(context)
         
         # Post-process and validate tasks
         validated_tasks = self._validate_and_enhance_tasks(tasks, context)
