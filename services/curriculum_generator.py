@@ -13,12 +13,18 @@ class CurriculumGenerator:
         self.academic_analyzer = AcademicAnalyzer()
         self.gemini_service = GeminiService()
         
-    def generate_daily_curriculum(self, student: StudentProfile, 
-                                timetable_dict: Dict, date: str = None) -> DailyCurriculum:
-        """Generate complete daily personalized curriculum"""
-        
+    def generate_daily_curriculum(self, student, timetable_dict=None, date=None):
         if date is None:
             date = datetime.now().strftime("%Y-%m-%d")
+
+        # Use section timetable if personal timetable not provided
+        if timetable_dict is None:
+            semester = getattr(student, 'semester', None)
+            section = getattr(student, 'section', None)
+            key = f"{semester}-{section}"
+            timetable_dict = section_timetables.get(key)
+            if timetable_dict is None:
+                raise Exception("No timetable found for student's section")
         
         # Step 1: Analyze timetable to find break periods
         break_periods = self.timetable_analyzer.analyze_daily_schedule(timetable_dict)

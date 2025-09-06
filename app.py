@@ -18,6 +18,36 @@ curriculum_generator = CurriculumGenerator()
 # In-memory storage (replace with database in production)
 students_db = {}
 timetables_db = {}
+# In app.py (for simplicity)
+section_timetables = {}  # key: "<semester>-<section>", value: timetable JSON dictionary
+
+@app.route('/api/set-section-timetable', methods=['POST'])
+def set_section_timetable():
+    data = request.json
+    semester = data.get('semester')
+    section = data.get('section')
+    if not semester or not section:
+        return jsonify({"success": False, "message": "Missing semester or section"}), 400
+    
+    key = f"{semester}-{section}"
+    section_timetables[key] = data
+    
+    return jsonify({"success": True, "message": "Section timetable saved."})
+
+@app.route('/api/get-section-timetable', methods=['GET'])
+def get_section_timetable():
+    semester = request.args.get('semester')
+    section = request.args.get('section')
+    if not semester or not section:
+        return jsonify({"success": False, "message": "Missing semester or section"}), 400
+    
+    key = f"{semester}-{section}"
+    timetable = section_timetables.get(key)
+    if timetable:
+        return jsonify({"success": True, "timetable": timetable})
+    else:
+        return jsonify({"success": False, "message": "Timetable not found"}), 404
+
 
 @app.route('/')
 def home():
@@ -49,6 +79,9 @@ def register_student():
         )
         
         # Set optional attributes
+        # Set semester and section fields
+        student.semester = data.get('semester', '')
+        student.section = data.get('section', '')
         if 'interests' in data:
             student.interests = data['interests']
         if 'career_goals' in data:
@@ -171,11 +204,7 @@ def generate_curriculum():
         timetable = timetables_db[timetable_key]
         
         # Generate curriculum
-        daily_curriculum = curriculum_generator.generate_daily_curriculum(
-            student=student,
-            timetable_dict=timetable.to_dict(),
-            date=date
-        )
+        daily_curriculum = curriculum_generator.generate_daily_curriculum(student, timetable_dict=None, date=date)
         
         return jsonify({
             'success': True,
@@ -267,10 +296,6 @@ def demo_setup():
             'error': str(e)
         }), 400
 
-if __name__ == '__main__':
-    # Load sample data for testing
-    print("Starting Smart Curriculum Generator API...")
-    print("Visit http://localhost:5000 for API documentation")
-    print("Use POST /api/demo-setup to create demo data")
-    
-    app.run(debug=True, host='0.0.0.0', port=5000)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+
